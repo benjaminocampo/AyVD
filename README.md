@@ -35,13 +35,15 @@ Then click on the search button to check which notebooks are saved in this repos
 ![GitHub tab](docs_images/colab_github_part6.png)
 
 
-7. Then we add a commit message for our changes. In this case is "Google Colab + GitHub tutorial."
+7. Then we add a commit message for our changes. In this case is *Google Colab + GitHub tutorial.* but you can add whatever you want in that field.
+
 (Tip: Try to write a message that tells the group what you've changed in the notebook).
 
+![GitHub tab](docs_images/colab_github_part7.png)
 
 8. Finally, you'll see these changes in the repository.
 
-
+![GitHub tab](docs_images/colab_github_part8.png)
 
 
 
