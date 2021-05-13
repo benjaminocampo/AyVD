@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 URL = "https://cs.famaf.unc.edu.ar/~mteruel/datasets/diplodatos/sysarmy_survey_2020_processed.csv"
 DB = pd.read_csv(URL)
@@ -51,8 +52,22 @@ def min_central_tendency(df, col, max_threshold):
     tendency_df = pd.DataFrame(tendency, columns=['threshold', 'mean', 'median'])
     tendency_df["distance"] = abs(tendency_df["mean"] - tendency_df["median"])
     best_threshold = tendency_df.idxmin()["distance"]
-    
+
     return (
         tendency_df.melt(id_vars='threshold', var_name='metric'),
         best_threshold
     )
+
+
+def clean_outliers(df, by, column_name):
+    subgroups = np.unique(df[by].values)
+    subcol = lambda sg: df[df[by] == sg][column_name]
+
+    masks = [
+        subcol(sg) - subcol(sg).mean() <= (2.5*subcol(sg).std())
+        for sg in subgroups
+    ]
+    mask_outliers = pd.concat(masks, ignore_index=True)
+
+    # TODO: Use DataFrame.drop instead
+    return df[df.index.isin(mask_outliers.index[mask_outliers])]
