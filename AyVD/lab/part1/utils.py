@@ -16,7 +16,7 @@ tools_programming_language = "tools_programming_languages"
 salary_monthly_BRUTO = "salary_monthly_BRUTO"
 work_province = "work_province"
 profile_age = "profile_age"
-
+profile_gender = "profile_gender"
 
 def split_languages(languages_str):
     if not isinstance(languages_str, str):

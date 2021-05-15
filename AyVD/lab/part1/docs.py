@@ -33,6 +33,7 @@ import pandas as pd
 import seaborn
 import matplotlib.pyplot as plt
 from seaborn.miscplot import palplot
+from seaborn.palettes import color_palette
 from utils import *
 
 # Random variables defined in utils.py
@@ -471,4 +472,107 @@ plt.ticklabel_format(style='plain', axis='y')
 group_col = 'work_contract_type'
 Tabla_2= df[[group_col,"salary_monthly_NETO"]].groupby(group_col).describe()
 Tabla_2
+
+# %% [markdown]
+# ## Densidad condicional
+# Estudie la distribución del salario según el nivel de estudio.
+# Separe la población según el nivel de estudio (elija dos subpoblaciones
+# numerosas) y grafique de manera comparativa ambos histogramas de la variable
+# 'salary_monthly_NETO' ¿Considera que ambas variables son independientes? ¿Qué
+# analizaría al respecto?
+# Calcule medidas de centralización y dispersión para cada subpoblación
+# %% [markdown]
+# ## Distribución del salario neto y nivel de estudio
+
+# %%
+df = DB[(DB[salary_monthly_NETO] > MINWAGE_IN_ARG)]
+df = clean_outliers(df, salary_monthly_NETO)
+
+seaborn.catplot(data=df, y='salary_monthly_NETO',
+                x='profile_studies_level', height=4, aspect=2)
+
+Study_count = df.profile_studies_level.value_counts()\
+    .reset_index()\
+    .rename(columns={'index': 'Study Level', 'profile_studies_level':'Frecuency'})
+Study_count[:10]
+# %%
+salary_col= 'salary_monthly_NETO'
+df_U = df[df['profile_studies_level'] == 'Universitario']
+df_T =df[df['profile_studies_level'] == 'Terciario']
+
+plt.hist(df_U[salary_col], color='red', bins=50)
+plt.hist(df_T[salary_col], color='blue', bins=50)
+plt.show()
+# %% [markdown]
+# La probabilidad de estar por arriba del promedio sin importar el grado de
+# estudio 33,13%, mientras que la probabilidad de estar por arriba del promedio
+# teniendo un nivel de estudio terciario es de el 23,88 %
+# %%
+avg_salary = df[salary_monthly_NETO].mean()
+
+p_above_avg = len(df[df[salary_col] >= avg_salary]) / len(df)
+
+is_above_avg = len(df[df[salary_col] > avg_salary])#Cantidad A
+Terciario= len(df[df["profile_studies_level"] == "Terciario"]) #Cantidad B
+Total=len(df) #Cantidad Total
+condicion= (df[salary_col] > avg_salary) & (df["profile_studies_level"] == "Terciario")
+Prob_AB=len(df[condicion])/Terciario
+
+is_above_avg2 = len(df[df[salary_col] > avg_salary])#Cantidad A
+Universitario = len(df[df["profile_studies_level"] == "Universitario"]) #Cantidad B
+Total2=len(df) #Cantidad Total
+condicion2= (df[salary_col] > avg_salary) & (df["profile_studies_level"] == "Universitario")
+Prob_AB2=len(df[condicion2])/Universitario
+Prob_AB2
+
+print(
+    f"La probabilidad de estar por arriba del promedio sin importar el grado de estudio es {p_above_avg * 100:.2f}%"
+)
+print(
+    f"mientras que la probabilidad de estar por arriba del promedio \
+    teniendo un nivel de estudio terciario es de el {Prob_AB * 100:.2f}%"
+)
+print(
+    f"Teniendo estudios universitarios es {Prob_AB2 * 100:.2f}%"
+)
+
+# %%
+
+Prob_A= is_above_avg/Total
+Prob_B= Terciario/Total
+
+(round(Prob_A * Prob_B, 4), round(Prob_AB, 4))
+# %%
+(round(Prob_AB, 4), round(Prob_A, 4))
+
+# %% [markdown]
+# Densidad Conjunto Condicional
+
+rvs = [
+    work_province,
+    work_contract_type,
+    salary_monthly_NETO,
+    profile_years_experience,
+    profile_gender
+]
+
+df = DB[
+    (DB[profile_years_experience] < 50) &
+    (DB[profile_age] < 100) &
+    (DB[salary_monthly_NETO] > MINWAGE_IN_ARG) &
+    (DB.salary_in_usd != "Mi sueldo está dolarizado")
+][rvs]
+
+df = clean_outliers(df, salary_monthly_NETO)
+df.describe().round(2)
+
+# %%
+
+plt.figure(figsize=(10,6))
+seaborn.scatterplot(data=df.sample(1000), 
+    x=profile_years_experience, y=salary_monthly_NETO,
+    marker='.',
+    hue=profile_gender
+)
+plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 # %%
