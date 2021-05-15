@@ -13,6 +13,7 @@ profile_years_experience = "profile_years_experience"
 salary_in_usd = "salary_in_usd"
 salary_monthly_NETO = "salary_monthly_NETO"
 tools_programming_language = "tools_programming_languages"
+salary_monthly_BRUTO = "salary_monthly_BRUTO"
 
 
 def split_languages(languages_str):

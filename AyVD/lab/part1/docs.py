@@ -174,15 +174,73 @@ df_langs[[programming_language, salary_monthly_NETO]] \
 # %% [markdown]
 # Notar que el 25% de los empleados que utilizan **Go** cobran a lo sumo
 # \$73120.50 de salario neto y el 75% \$106000, posicionandose como el lenguaje
-# mejor pago, llegando hasta un máximo de \$150000 mensuales! También puede verse
-# que en su mayoría el minimo salario está cerca del vital y móvil decretado por
-# el país. También los lenguajes **Javascript**, **HTML**, y **CSS** otorgan
-# salarios similares, los cuales podría deverse a que es más utilizado como
-# "stack", posiblemente para un desarrollador de web frontend.
+# mejor pago, llegando hasta un máximo de \$150000 mensuales! También puede
+# verse que en su mayoría el minimo salario está cerca del vital y móvil
+# decretado por el país. También los lenguajes **Javascript**, **HTML**, y
+# **CSS** otorgan salarios similares, ¿Distribuiran de manera similar? Los
+# siguientes boxenplots mustran dicha similitud.
 # %%
+similar_langs = ["html", "javascript", ".net", "css"]
 plt.figure(figsize=(12, 6))
-seaborn.boxplot(data=df_langs, x=salary_monthly_NETO, y=programming_language,
-                color='orangered')
+seaborn.boxenplot(
+    data=df_langs[df_langs[programming_language].isin(similar_langs)],
+    x=salary_monthly_NETO, y=programming_language,
+    color='orangered'
+)
 plt.ticklabel_format(style='plain', axis='x')
-# %%
 
+
+plt.figure(figsize=(12, 6))
+seaborn.boxenplot(
+    data=df_langs,
+    x=salary_monthly_NETO, y=programming_language,
+    color='orangered'
+)
+plt.ticklabel_format(style='plain', axis='x')
+
+
+# %% [markdown]
+# Notar como el rango intercuartil para cada una de las distribuciones de
+# salarios se encuentra por debajo de los \$100000 salvo para **Go** que
+# ligeramente lo supera, sin embargo tenemos una asimetría o sesgo hacia los
+# valores más chicos de la distribución. Lo cual nos diría que, si bien es el
+# lenguaje mayor pago, un poco más del 50% tienen un salario menor que los
+# \$100000. A pesar de este sesgo es el único de los 12 que no presenta grandes
+# asimetrias en sus colas y cuyos valores extremos no son tan altos. Notar como
+# Javascript, HTML, .NET y CSS distribuyen de manera similar. Esto nos daría
+# como trabajo a futuro revisar si esto se mantiene para distintos roles de los
+# empleados dentro de la compañia. Por último los boxplots dejan en evidencia su
+# desventaja al no tener información sobre el primer y el cuarto cuantiles.
+
+# %% [markdown]
+# ## Asociación
+# Para ver si existe una correlación entre el salario bruto y el neto analizamos
+# el coeficiente de correlación de Pearson $\rho$ entre estas variables aleatorias.
+
+# %%
+salary_cols = [salary_monthly_NETO, salary_monthly_BRUTO]
+DB[salary_cols].corr()
+
+# %% [markdown]
+# Notar que el valor de $\rho$ entre los salarios nos dá un valor positivo
+# cercano a 1. Esto nos indica que existe una correlación entre las variables
+# que se comporta aproximadamente lineal pero que aún así podría aún haber una
+# fuerte relación no lineal entre ellas. También podemos visualizar la
+# distribución conjunta de estas variables por medio un `scatterplot`.
+
+# %%
+seaborn.scatterplot(data=DB[salary_cols], x=salary_monthly_BRUTO, y=salary_monthly_NETO)
+plt.axvline(DB[salary_monthly_BRUTO].mean(), color="black", linestyle="--", label="mean")
+plt.axhline(DB[salary_monthly_NETO].mean(), color="black", linestyle="--")
+plt.legend()
+
+# %% [markdown]
+# Claramente concuerda con el valor del $\rho$, sin embargo también deja en
+# evidencia que un valor cerca de 1 no necesariamente implica que al incrementar
+# el valor de una variable causa que la otra incremente. Lo único que nos dice
+# es que una grán cantidad de sueldos en bruto están asociados con otra numerosa
+# cantidad de sueldos en neto. Pero esto no ocurre para valores que están
+# realmente alejados de la media de ambas variables. Si bien podrían ser
+# considerados outliers, otros más cercanos siguen este comportamiento que
+# dejarían en cuestión si realmente puede considerarse eliminar la columna de
+# salario bruto.
