@@ -32,6 +32,7 @@
 import pandas as pd
 import seaborn
 import matplotlib.pyplot as plt
+from seaborn.miscplot import palplot
 from utils import *
 
 # Random variables defined in utils.py
@@ -162,7 +163,7 @@ df_langs
 # removiendo para cada lenguaje, los salarios que estén a una distancia 2.5
 # veces su desvio estandar.
 # %%
-df_langs = clean_outliers(
+df_langs = clean_outliers_bygroup(
     df_langs,
     by=programming_language,
     column_name=salary_monthly_NETO
@@ -196,8 +197,6 @@ seaborn.boxenplot(
     x=salary_monthly_NETO, y=programming_language,
     color='orangered'
 )
-plt.ticklabel_format(style='plain', axis='x')
-
 
 # %% [markdown]
 # Notar como el rango intercuartil para cada una de las distribuciones de
@@ -232,6 +231,8 @@ DB[salary_cols].corr()
 seaborn.scatterplot(data=DB[salary_cols], x=salary_monthly_BRUTO, y=salary_monthly_NETO)
 plt.axvline(DB[salary_monthly_BRUTO].mean(), color="black", linestyle="--", label="mean")
 plt.axhline(DB[salary_monthly_NETO].mean(), color="black", linestyle="--")
+plt.ticklabel_format(style='plain', axis='y')
+plt.ticklabel_format(style='plain', axis='x')
 plt.legend()
 
 # %% [markdown]
@@ -244,3 +245,230 @@ plt.legend()
 # considerados outliers, otros más cercanos siguen este comportamiento que
 # dejarían en cuestión si realmente puede considerarse eliminar la columna de
 # salario bruto.
+
+# %% [markdown]
+# TODO: Cambiar la conclusión para poner que se puede sacar la columna de bruto
+
+# %% [markdown]
+# ## Densidad Conjunta
+# 1) El análisis de la Densidad Conjunta, en un primer momento nos permite
+#    detectar si existe algún patrón o compartamiento determinado entre dos
+#    variables, es decir si una variable se ve afectada ante un cambio en la
+#    otra. Si vemos que existe una cierta dependencia entre ellas, podemos
+#    incluso modelar una función de densidad o probalidad conjunta.
+# 
+#    Para variables numericas es util calcular medidas como la Covarianza o el
+#    Coeficiente de Correlación Lineal de Pearson, y tambien usar gráficos como
+#    por ejemplo de dispersión o de lineas. En cambio para variables categóricas
+#    es más frecuente usar como visualizaciones las tablas de frecuencias
+#    relativas o gráficos de barras. Cuando analizamos una variable categorica y
+#    una numerica son comunes los gráficos de barra o gráficos de caja.
+
+# %% [markdown]
+# ## Elección de las Variables
+# Categóricas: `work_province`, `work_contract_type`
+#
+# Numéricas: `salary_monthly_NETO`, `profile_years_experience`, `profile_age`
+#
+
+# %%
+rvs = [
+    work_province,
+    work_contract_type,
+    salary_monthly_NETO,
+    profile_years_experience,
+    profile_age
+]
+
+df = DB[
+    (DB[profile_years_experience] < 50) &
+    (DB[profile_age] < 100) &
+    (DB[salary_monthly_NETO] > MINWAGE_IN_ARG)
+][rvs]
+
+df = clean_outliers(df, salary_monthly_NETO)
+df.describe().round(2)
+# %% [markdown]
+# ## Análisis de Años de Experiencia y Salario Neto
+# %%
+df[[salary_monthly_NETO, profile_years_experience]].corr()
+# %% [markdown]
+# Se observa que $\rho$ entre los años de experiencia y el salario neto es
+# positivo pero próximo a 0. Lo cual significa que no tienen una relación lineal
+# fuerte como se observa en el siguioente gráfico de dispersión.
+# %%
+seaborn.pairplot(
+    data=df,
+    y_vars=[profile_years_experience],
+    x_vars=[salary_monthly_NETO],
+    height=4,aspect=2
+)
+plt.ticklabel_format(style='plain', axis='x')
+
+# %%
+plt.figure(figsize=(10,6))
+seaborn.lineplot(
+    data=df,
+    x=profile_years_experience, y=salary_monthly_NETO,
+    estimator= 'mean' , ci=None
+)
+# %% [markdown]
+# Observamos que la variable años de experiencia, al ser discreta, optamos por
+# generar rangos para poder interpretar mejor la relación de estas variables. A
+# pesar de los picos, notar que existe una tendencia creciente para los primeros
+# 15 años de experiencia, pero luego dejan de observarse un patrón determinado.
+
+df['profile_years_segment'] = to_categorical(df[profile_years_experience], max_cut=30)
+# %% [markdown]
+# Con el siguiente gráfico podemos visualizar mejor la relación entre años de
+# experiencia y salario mensual neto. Podemos observar que los salarios netos en
+# promedio rondan en los 125000 para el rango de 10 a 40 años de experiencia,
+# sin embargo para el rango comprendido entre 0 y 10 años de experiencia y entre
+# 40 y 50 años de experiencia el salario promedio baja.
+
+# Notar que para los primeros 10 años de experiencia el intervalo de confianza
+# es mucho más chico debido a que su estimación está dada por una muestra más
+# representativa que para los intervalos (10, 20], (20, 30] y (30, 44]. Siendo
+# este último el menos confiable. Ahora bien, es claro ver que el salario neto
+# medio aumenta a partir de los primeros 10 años de experiencia. Esto lo
+# confirma el siguiente cuadro de medidas descriptivas
+# %%
+
+fig = plt.figure(figsize=(8,6))
+seaborn.barplot(data=df, x='profile_years_segment', y='salary_monthly_NETO', estimator=np.mean)
+plt.xticks(rotation=45)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Años de experiencia")
+plt.ticklabel_format(style='plain', axis='y')
+# %%
+group_col = 'profile_years_segment'
+Tabla_1= df[[group_col, salary_monthly_NETO]].groupby(group_col).describe().sort_values(by="profile_years_segment",ascending=True)
+Tabla_1
+# %% [markdown]
+# ## ANÁLISIS PROVINCIAS DE ARGENTINA Y SALARIO NETO
+
+# %%
+fig = plt.figure(figsize=(20,6))
+seaborn.barplot(y=df[salary_monthly_NETO], x=df[work_province], estimator=np.mean)
+plt.xticks(rotation=90)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Zonas de Argentina")
+plt.ticklabel_format(style='plain', axis='y')
+# %% [markdown]
+# No es claro visualizar este gráfico con tantas categorías y además vemos que
+# existen ciertas provincias con muy pocos valores, procedemos a agrupar por
+# zonas.
+
+# %%
+
+new_groups = {'Jujuy':'Nordeste y Noreste',
+'Salta':'Nordeste y Noreste',
+'Tucumán':'Nordeste y Noreste',
+'Catamarca':'Nordeste y Noreste',
+'Santiago del Estero':'Nordeste y Noreste',
+'La Rioja':'Nordeste y Noreste',
+'Corrientes':'Nordeste y Noreste',
+'Entre Ríos':'Nordeste y Noreste',
+'Chaco':'Nordeste y Noreste',
+'Misiones':'Nordeste y Noreste',
+'Formosa':'Nordeste y Noreste',
+'GBA':'Buenos Aires',
+'Provincia de Buenos Aires':'Buenos Aires',
+'Córdoba':'Centro',
+'Santa Fe':'Centro',
+'La Pampa':'Centro',
+'Santiago del Estero':'Centro',
+'San Luis':'Cuyo y Patagonia',
+'Mendoza':'Cuyo y Patagonia',
+'San Juan':'Cuyo y Patagonia',
+'Tierra del Fuego':'Cuyo y Patagonia',
+'Santa Cruz':'Cuyo y Patagonia',
+'Río Negro':'Cuyo y Patagonia',
+'Chubut':'Cuyo y Patagonia',
+'Neuquén':'Cuyo y Patagonia'}
+order = ['Nordeste y Noreste', 'Centro', 'Buenos Aires','Ciudad Autónoma de Buenos Aires', 'Cuyo y Patagonia']
+df["grouped_province"] = df[work_province].replace(new_groups)
+fig = plt.figure(figsize=(8,6))
+seaborn.barplot(y=df[salary_monthly_NETO], x=df["grouped_province"], estimator=np.mean, 
+                                order=order
+                )
+plt.xticks(rotation=90)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Zonas de Argentina")
+plt.ticklabel_format(style='plain', axis='y')
+# %%
+df[["grouped_province", salary_monthly_NETO]].groupby("grouped_province").describe()
+# %% [markdown]
+# Podemos observar que para las regiones del Centro, Buenos Aires y Cuyo y
+# Patagonia el salario medio es similar y cercano al salario medio del total de
+# la muestra. Sin embargo, para la región del Nordeste y Noreste es ligeramente
+# más baja.
+
+# %% [markdown]
+# ## 3. Años de Edad - Tipos de Contrato
+
+# %%
+
+df["profile_age_segment"] = to_categorical(df[profile_age], bin_size=5, min_cut=15, max_cut=50)
+
+fig = plt.figure(figsize=(10,10))
+df_ages_fulltime = df[df[work_contract_type] == "Full-Time"] \
+    .groupby("profile_age_segment").size() \
+    .to_frame().rename(columns={0: "count"}) \
+    .reset_index()
+df_ages_nofulltime = df[df[work_contract_type] != "Full-Time"] \
+    .groupby("profile_age_segment").size() \
+    .to_frame().rename(columns={0: "count"}) \
+    .reset_index()
+
+seaborn.pointplot(
+    data=df_ages_fulltime,
+    x="profile_age_segment", y="count",
+    color='b',
+    legend='fulltime'
+)
+
+seaborn.pointplot(
+    data=df_ages_nofulltime,
+    x="profile_age_segment", y="count",
+    color='r',
+    legend='nofulltime'
+)
+plt.legend()
+plt.show()
+# %% [markdown]
+# ## 4. Tipos de Contraros Y Salarios Netos Medios
+
+# %%
+new_groups = {'Part-Time':'Otros contratos',
+'Tercerizado (trabajo a través de consultora o agencia)':'Otros contratos',
+'Remoto (empresa de otro país)':'Otros contratos',
+'Freelance':'Otros contratos'}
+grouped_contract = df.work_contract_type.replace(new_groups)
+seaborn.barplot(y=df['salary_monthly_NETO'], x=grouped_contract, estimator=np.mean)
+plt.xticks(rotation=55)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Tipos de contracto")
+plt.ticklabel_format(style='plain', axis='y')
+
+# %% [markdown]
+# Observamos que la media de los otros contratos en considerablemente superior
+# que los Full - Time. Veamos especificamente en que tipo de contrato se
+# encuentran esos mayores sueldo
+
+# %%
+seaborn.barplot(y=df['salary_monthly_NETO'], x=df['work_contract_type'], estimator=np.mean)
+plt.xticks(rotation=90)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Tipos de contracto")
+plt.ticklabel_format(style='plain', axis='y')
+
+# %% [markdown]
+# Los mayores sueldos se encuentran en las personas que trabajan de forma Remota
+# para otro país, es decir los sueldos dolarizados.
+
+# %%
+group_col = 'work_contract_type'
+Tabla_2= df[[group_col,"salary_monthly_NETO"]].groupby(group_col).describe()
+Tabla_2
+# %%
