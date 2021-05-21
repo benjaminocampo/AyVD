@@ -147,4 +147,5 @@ ttstat, tpvalue, df = cm.ttest_ind(alternative="larger", usevar="unequal")
 # %%
 tpvalue <= alpha
 
-# %%
+# %% [markdown]
+# ## Potencia del Test
