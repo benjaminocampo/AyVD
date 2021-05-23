@@ -25,6 +25,7 @@ salary_in_usd = "salary_in_usd"
 work_province = "work_province"
 profile_age = "profile_age"
 profile_gender = "profile_gender"
+profile_studies_level = "profile_studies_level"
 
 def clean_outliers(dataset, column_name):
     """Returns dataset removing the outlier rows from column @column_name."""
@@ -109,14 +110,20 @@ rvs = [
     work_contract_type,
     salary_monthly_NETO,
     profile_years_experience,
-    profile_age
+    profile_age,
+    salary_in_usd
 ]
 
 df = DB[
     (DB[profile_years_experience] < 50) &
     (DB[profile_age] < 100) &
     (DB[salary_monthly_NETO] > MINWAGE_IN_ARG)
-][rvs]
+][rvs] \
+    .replace({
+        "Mi sueldo está dolarizado": "dolarizado",
+        'Tercerizado (trabajo a través de consultora o agencia)': 'Tercerizado'
+    }) \
+    .fillna("No dolarizado")
 
 df = clean_outliers(df, salary_monthly_NETO)
 df.describe().round(2)
@@ -186,7 +193,7 @@ df[[profile_years_segment, salary_monthly_NETO]] \
 # Para una mejor visualización de este análisis decidimos agrupar las provincias
 # por regiones y de esta forma obtener grupos más representativos.
 # %%
-new_groups = {'Jujuy':'Nordeste y Noreste',
+new_regions = {'Jujuy':'Nordeste y Noreste',
 'Salta':'Nordeste y Noreste',
 'Tucumán':'Nordeste y Noreste',
 'Catamarca':'Nordeste y Noreste',
@@ -215,7 +222,7 @@ order = ['Nordeste y Noreste', 'Centro', 'Buenos Aires','Ciudad Autónoma de Bue
 
 region = "region"
 
-df[region] = df[work_province].replace(new_groups)
+df[region] = df[work_province].replace(new_regions)
 fig = plt.figure(figsize=(8,6))
 seaborn.barplot(
     y=df[salary_monthly_NETO],
@@ -237,6 +244,12 @@ df[[region, salary_monthly_NETO]].groupby(region).describe()
 # ## Años de Edad - Tipos de Contrato
 
 # %%
+new_contracts = {
+    'Part-Time':'Otros contratos',
+    'Tercerizado':'Otros contratos',
+    'Remoto (empresa de otro país)':'Otros contratos',
+    'Freelance':'Otros contratos'
+}
 
 profile_age_segment = "profile_age_segment"
 
@@ -248,76 +261,58 @@ df[profile_age_segment] = to_categorical(
 )
 
 fig = plt.figure(figsize=(10,10))
-df_ages_fulltime = df[df[work_contract_type] == "Full-Time"] \
-    .groupby(profile_age_segment).size() \
-    .to_frame().rename(columns={0: "count"}) \
-    .reset_index()
-df_ages_nofulltime = df[df[work_contract_type] != "Full-Time"] \
-    .groupby(profile_age_segment).size() \
+
+df_ages = df.replace(new_contracts) \
+    .groupby([profile_age_segment, work_contract_type]).size() \
     .to_frame().rename(columns={0: "count"}) \
     .reset_index()
 
 seaborn.pointplot(
-    data=df_ages_fulltime,
-    x=profile_age_segment, y="count",
-    color='b',
-    legend='fulltime'
+    data=df_ages,
+    hue=work_contract_type,
+    x=profile_age_segment, y="count"
 )
-
-seaborn.pointplot(
-    data=df_ages_nofulltime,
-    x=profile_age_segment, y="count",
-    color='r',
-    legend='nofulltime'
-)
-plt.legend()
-plt.show()
+# %% [markdown]
+# Se observa que hay un aumento del tipo de contrato Full Time entre los 15 a 30
+# años, pero no podemos asegurar que hay una relación entre el tipo de contrato
+# y los años de experiencia.
 
 # %% [markdown]
-# Concluimos que la edad sí tiene una influencia en la elección del tipo de
-# contrato. Notar
-#
-
-# %% [markdown]
-# ## Tipos de Contraros Y Salarios Netos Medios
-
-# %%
-new_groups = {
-    'Part-Time':'Otros contratos',
-    'Tercerizado (trabajo a través de consultora o agencia)':'Otros contratos',
-    'Remoto (empresa de otro país)':'Otros contratos',
-    'Freelance':'Otros contratos'}
-grouped_contract = df[work_contract_type].replace(new_groups)
-seaborn.barplot(y=df[salary_monthly_NETO], x=grouped_contract, estimator=np.mean)
-plt.xticks(rotation=55)
-plt.ylabel("Media de salario mensual NETO")
-plt.xlabel("Tipos de contracto")
-plt.ticklabel_format(style='plain', axis='y')
-
-# %% [markdown]
-# Observamos que la media de los otros contratos es considerablemente superior
-# que los Full - Time. Veamos especificamente en que tipo de contrato se
-# encuentran estos mayores sueldos.
-
+# ## Tipos de Contratos Y Salarios Netos Medios
 # %%
 seaborn.barplot(
     y=df[salary_monthly_NETO],
     x=df[work_contract_type],
     estimator=np.mean
 )
-plt.xticks(rotation=90)
+plt.xticks(rotation=55)
 plt.ylabel("Media de salario mensual NETO")
 plt.xlabel("Tipos de contracto")
 plt.ticklabel_format(style='plain', axis='y')
 
 # %% [markdown]
-# Los mayores sueldos se encuentran en las personas que trabajan de forma Remota
-# para otro país, es decir los sueldos dolarizados.
+# Los mayores sueldos se encuentran en las personas que trabajan de forma remota
+# para otro país ¿Se encontrarán en este grupo los sueldos dolarizados?
 
 # %%
-df[[work_contract_type, salary_monthly_NETO]] \
-    .groupby(work_contract_type) \
+fig = plt.figure(figsize=(8,6))
+seaborn.barplot(
+    y=df[salary_monthly_NETO], x=df[work_contract_type],
+    hue=df[salary_in_usd],
+    estimator=np.mean
+)
+plt.xticks(rotation=45)
+plt.ylabel("Media de salario mensual NETO")
+plt.xlabel("Tipo de contrato")
+plt.ticklabel_format(style='plain', axis='y')
+
+df[[work_contract_type, salary_monthly_NETO, salary_in_usd]] \
+    .groupby([work_contract_type, salary_in_usd]) \
     .describe()
+# %% [markdown]
+# Notar que el sueldo neto medio de los que trabajan remotamente parecería ser
+# superior tanto en pesos como en dolares que los otros tipos de contrato.
+# 
 
 # %% [markdown]
 # ## Densidad condicional
@@ -334,66 +329,69 @@ df[[work_contract_type, salary_monthly_NETO]] \
 df = DB[(DB[salary_monthly_NETO] > MINWAGE_IN_ARG)]
 df = clean_outliers(df, salary_monthly_NETO)
 
-seaborn.catplot(data=df, y='salary_monthly_NETO',
-                x='profile_studies_level', height=4, aspect=2)
+seaborn.catplot(data=df, y=salary_monthly_NETO,
+                x=profile_studies_level, height=4, aspect=2)
 
 Study_count = df.profile_studies_level.value_counts()\
     .reset_index()\
     .rename(columns={'index': 'Study Level', 'profile_studies_level':'Frecuency'})
 Study_count[:10]
 # %%
-salary_col= 'salary_monthly_NETO'
-df_U = df[df['profile_studies_level'] == 'Universitario']
-df_T =df[df['profile_studies_level'] == 'Terciario']
+salary_col = salary_monthly_NETO
+df_U = df[df[profile_studies_level] == 'Universitario']
+df_T = df[df[profile_studies_level] == 'Terciario']
 
 plt.hist(df_U[salary_col], color='red', bins=50)
 plt.hist(df_T[salary_col], color='blue', bins=50)
 plt.show()
-# %% [markdown]
-# La probabilidad de estar por arriba del promedio sin importar el grado de
-# estudio 33,13%, mientras que la probabilidad de estar por arriba del promedio
-# teniendo un nivel de estudio terciario es de el 23,88 %
 # %%
 avg_salary = df[salary_monthly_NETO].mean()
+is_above_avg = df[salary_col] >= avg_salary
 
-p_above_avg = len(df[df[salary_col] >= avg_salary]) / len(df)
-
-is_above_avg = len(df[df[salary_col] > avg_salary])#Cantidad A
-Terciario= len(df[df["profile_studies_level"] == "Terciario"]) #Cantidad B
-Total=len(df) #Cantidad Total
-condicion= (df[salary_col] > avg_salary) & (df["profile_studies_level"] == "Terciario")
-Prob_AB=len(df[condicion])/Terciario
-
-is_above_avg2 = len(df[df[salary_col] > avg_salary])#Cantidad A
-Universitario = len(df[df["profile_studies_level"] == "Universitario"]) #Cantidad B
-Total2=len(df) #Cantidad Total
-condicion2= (df[salary_col] > avg_salary) & (df["profile_studies_level"] == "Universitario")
-Prob_AB2=len(df[condicion2])/Universitario
-Prob_AB2
+p_above_avg = len(df[is_above_avg]) / len(df)
 
 print(
     f"La probabilidad de estar por arriba del promedio sin importar el grado de estudio es {p_above_avg * 100:.2f}%"
 )
+
+# %%
+medium_studies = df["profile_studies_level"] == "Terciario"
+
+Prob_AB = len(df[is_above_avg & medium_studies]) / len(df[medium_studies])
+
 print(
-    f"mientras que la probabilidad de estar por arriba del promedio \
+    f"La probabilidad de estar por arriba del promedio \
     teniendo un nivel de estudio terciario es de el {Prob_AB * 100:.2f}%"
 )
+
+# %%
+university_studies = df["profile_studies_level"] == "Universitario"
+
+Prob_AB2 = len(df[is_above_avg & university_studies])/len(df[university_studies])
 print(
     f"Teniendo estudios universitarios es {Prob_AB2 * 100:.2f}%"
 )
-
 # %%
-
-Prob_A= is_above_avg/Total
-Prob_B= Terciario/Total
-
+Prob_A = len(df[is_above_avg])/len(df)
+Prob_B = len(df[medium_studies])/len(df)
+# %% [markdown]
+# Podemos concluir que las variables `profile_studies` y `salary_monthly_NETO`
+# no son independientes. Para confirmarlo vemos que no se cumplen las
+# siguientes igualdades:
+# 
+# $P(AB) = P(A)P(B)$
+# %%
 (round(Prob_A * Prob_B, 4), round(Prob_AB, 4))
-# %%
+# %% [markdown]
+# Si $P(B) \neq 0 \rightarrow P(AB) = P(A)$
 (round(Prob_AB, 4), round(Prob_A, 4))
+# %%
+df[[profile_studies_level, salary_monthly_NETO]] \
+    .loc[df[profile_studies_level].isin(["Terciario", "Universitario"])] \
+    .groupby(profile_studies_level).describe()
 
 # %% [markdown]
-# Densidad Conjunto Condicional
-
+# ## Densidad Conjunto Condicional
 rvs = [
     work_province,
     work_contract_type,
@@ -413,12 +411,14 @@ df = clean_outliers(df, salary_monthly_NETO)
 df.describe().round(2)
 
 # %%
-
 plt.figure(figsize=(10,6))
-seaborn.scatterplot(data=df.sample(1000), 
+seaborn.scatterplot(data=df.sample(500), 
     x=profile_years_experience, y=salary_monthly_NETO,
     marker='.',
     hue=profile_gender
 )
-plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-# %%
+plt.legend()
+# %% [markdown]
+# Se observa una tendencia de que el salario neto aumenta con los años de
+# experiencia sin importar el género. Sin embargo, en esta muestra los salarios
+# más altos se encuentran concentrados en el género masculino.
