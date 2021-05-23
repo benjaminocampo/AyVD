@@ -63,18 +63,7 @@ def min_central_tendency(df, col, max_threshold):
 
 
 def clean_outliers_bygroup(df, by, column_name):
-    subgroups = np.unique(df[by].values)
-    subcol = lambda sg: df[df[by] == sg][column_name]
-
-    masks = [
-        subcol(sg) - subcol(sg).mean() <= (2.5*subcol(sg).std())
-        for sg in subgroups
-    ]
-    mask_outliers = pd.concat(masks, ignore_index=True)
-
-    # TODO: Use DataFrame.drop instead
-    return df[df.index.isin(mask_outliers.index[mask_outliers])]
-
+    pass
 
 def clean_outliers(dataset, column_name):
     """Returns dataset removing the outlier rows from column @column_name."""
