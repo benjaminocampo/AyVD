@@ -68,8 +68,13 @@ np.sqrt(groupA.std()**2 / groupA.size + groupB.std()**2 / groupB.size)
 # Ahora compararemos la estimación puntual obtenida con la de un intervalo de
 # confianza cuyo nivel de significancia es de $1 - \alpha = 0.95$. El
 # estadistico utilizado es $\frac{\overline X_A - \overline X_B - \mu_A -
-# \mu_B}{\sqrt{{\frac{S_A^2}{n_A} + \frac{S_B^2}{n_B}}}}$
+# \mu_B}{\sqrt{{\frac{S_A^2}{n_A} + \frac{S_B^2}{n_B}}}}$.
 #
+# Al substituir la media muestral del salario para ambos grupos $\overline x_A -
+# \overline x_B$ nos dá el valor observado del estadistico que indica la
+# distancia entre $\overline x_A - \overline x_B$ y $\mu_A - \mu_B$ expresado en
+# unidades de desvio estandar.
+
 # Ahora bien, como el tamaño de la muestra para el grupo A es de 4815 y el del
 # grupo B de 891, por el TCL, el estadistico tiene distribución aprox. normal.
 # Obteniendo el siguiente intervalo de confianza:
@@ -109,6 +114,9 @@ cm.tconfint_diff(alpha=alpha, usevar='unequal')
 #
 # Por lo tanto procederemos a realizar tanto z como t tests para ver que
 # para ambos tenemos resultados similares.
+# Notar que tenemos un test "upper tail", por ende vamos a rechazar $H_0$ cuando
+# el valor observado por el estadistico sea positivo y considerablemente alto.
+#
 # Consideramos un nivel de significancia similar del 95% y suponiendo varianzas
 # distintas de ambos grupos.
 
@@ -125,8 +133,10 @@ ztstat, zpvalue = cm.ztest_ind(alternative="larger", usevar="unequal")
 zpvalue <= alpha
 
 # %% [markdown]
-# Claramente el p-valor es menor por una gran diferencia y por ende afirmamos que
-# con un 95% de confianza el salario medio del grupo A es mayor que el del B.
+# Claramente el p-valor es menor por una gran diferencia. Además `ztstat` nos
+# indica que $\overline x_A - \overline x_B$ es aprox. 9.7 desviaciones estandar
+# (de $\overline X_A - \overline X_B$) del esperado y por ende afirmamos que con
+# un 95% de confianza que el salario medio del grupo A es mayor que el del B.
 
 # %% [markdown]
 # Si ahora realizamos el mismo test de hipotesis bajo la suposición de $H_0$ y
