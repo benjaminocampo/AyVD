@@ -16,7 +16,7 @@ computer than just you're favourite browser.
     ![Welcome Window](docs_images/colab_github_part1.png)
 
 2. Click on the GitHub tab and paste the url of this repository
-   <https://github.com/benjaminocampo/DiploDatos> on the text blank it shows.
+   <https://github.com/benjaminocampo/AyVD> on the text blank it shows.
    Then click on the search button to check which notebooks are saved in this
    repository.
 
@@ -27,34 +27,11 @@ computer than just you're favourite browser.
 
     ![GitHub tab](docs_images/colab_github_part3.png)
 
-4. Then you can start working with the notebook!
+4. Then you can start running the notebook!
 
     ![Notebooks](docs_images/colab_github_part4.png)
 
-5. In order to save notebooks to this repository, choose **File -> Save a copy
-   to GitHub**.
-
-    ![Saving Notebooks](docs_images/colab_github_part5.png)
-
-6. Google Colab will ask for GitHub permissions so we just click on **Authorize
-   googlecolab**.
-
-    ![Saving Notebooks](docs_images/colab_github_part6.png)
-
-7. Then we add a commit message for our changes. In this case is *Google Colab +
-   GitHub tutorial.* but you can add whatever you want in that field.
-
-    (Tip: Try to write a message that tells the group what you've changed in the
-    notebook).
-
-    ![GitHub Commit](docs_images/colab_github_part7.png)
-
-8. Finally, you'll see these changes in the repository.
-
-    ![GitHub Commit](docs_images/colab_github_part8.png)
-
 ### Running locally through Conda + Jupyter + VirtualEnv + Git
-
 
 #### Conda
 
@@ -90,9 +67,9 @@ the most important ones if you're unfamiliar with them:
 
 #### Git
 
-In order to install `git` it will depend on your operative system:
+Installing `git` will depend on your operative system:
 
-- Installing on Linux (on Debian-based distributions): 
+- Installing on Linux (on Debian-based distributions):
 
     ```bash
     sudo apt install git-all
@@ -108,15 +85,15 @@ or Anaconda Prompt and run:
 git --version
 ```
 
-If it shows your current git version, you can move on with the next step!
+If it shows your current git version, you can move on with next step!
 
 #### Cloning this repository
 
-After installing git you can clone this repository to have a local version of
-it. Open a terminal in the directory you want to save this repository and run:
+After installing git, you can clone this repository to have a local version of
+it. Open a terminal in the directory you want to save it and run:
 
 ```bash
-git clone https://github.com/benjaminocampo/DiploDatos.git
+git clone https://github.com/benjaminocampo/AyVD.git
 ```
 
 #### Setting up a Virtual Environment
@@ -135,12 +112,13 @@ dependencies:
   - numpy
   - pandas
   - matplotlib
+  - statsmodels
   - seaborn=0.11
 ```
 
 That means that the environment to create has the name diplodatos-ayvd and the
 dependencies are `seaborn=0.11` and the newest versions of `numpy`, `pandas`,
-and `matplotlib`.
+`matplotlib`, and `statsmodels`
 
 The steps to create a virtual environment with these dependencies are the
 following:
@@ -154,8 +132,6 @@ following:
     conda env create -f environment.yml
     ```
 
-    ![conda create](docs_images/conda_jupyter_venv_part2.png)
-
     (Note: This step might take some time).
 
 3. Activate the environment in order to have available the dependencies with:
@@ -164,11 +140,26 @@ following:
     conda activate diplodatos-ayvd
     ```
 
-    It must show the name of the environment in parenthesis like this.
+    The active environment is also displayed in front of your prompt in
+    (parentheses) or [brackets] like this:
 
-    ![conda activate](docs_images/conda_jupyter_venv_part3.png)
+    ```bash
+    (diplodatos-ayvd)$
+    ```
 
-4. Run jupyter lab or jupyter notebook with:
+4. If you don't have installed ipykernel on your system, run:
+
+    ```bash
+    conda install -c anaconda ipykernel
+    ```
+
+    Then, add the active environment to jupyter so its recognized as a new kernel:
+
+    ```bash
+    ipython kernel install --user --name=diplodatos-ayvd
+    ```
+
+5. Run jupyter lab or jupyter notebook with:
 
     ```bash
     jupyter lab
@@ -182,10 +173,16 @@ following:
     jupyter notebook
     ```
 
-
     ![jupyter notebook](docs_images/conda_jupyter_venv_part5.png)
 
-5. The previous step should have opened a tab on your browser with the
+6. The previous step should have opened a tab on your browser with the
    application. Open the jupyter notebook you're working on.
 
-6. You're ready to do science!
+7. Be sure that jupyter is using the kernel you have just set by choosing
+   **Kernel -> Change Kernel**:
+
+    ![jupyter notebook](docs_images/conda_jupyter_venv_part6.png)
+
+    ![jupyter notebook](docs_images/conda_jupyter_venv_part7.png)
+
+8. You're ready to do science!
