@@ -21,12 +21,6 @@ is_man = df.profile_gender == 'Hombre'
 groupA = df[(df[salary_monthly_NETO] > 1000) & is_man][salary_monthly_NETO]
 groupB = df[(df[salary_monthly_NETO] > 1000) & ~is_man][salary_monthly_NETO]
 
-# %%
-groupA
-
-# %%
-groupB
-
 # %% [markdown]
 # ## Estimación Puntual
 # Consideramos las variables aleatorias $X_A$ y $X_B$, salario neto de los
@@ -93,6 +87,7 @@ cm.zconfint_diff(alpha=alpha, usevar='unequal')
 # distribución t-student y por ende también podemos realizar un análisis sin
 # suponer normalidad. Aún aborando de esta manera obtenemos un resultado
 # similar.
+# %%
 cm.tconfint_diff(alpha=alpha, usevar='unequal')
 # %% [markdown]
 # ## Tests de Hipótesis
@@ -135,9 +130,9 @@ zpvalue <= alpha
 # %% [markdown]
 # Claramente el p-valor es menor por una gran diferencia. Además `ztstat` nos
 # indica que $\overline x_A - \overline x_B$ es aprox. 9.7 desviaciones estandar
-# (de $\overline X_A - \overline X_B$) del esperado y por ende afirmamos que con
-# un 95% de confianza que el salario medio del grupo A es mayor que el del B.
-
+# (de $\overline X_A - \overline X_B$) del esperado ($\mu_A - \mu_B)$ y por ende
+# afirmamos que con un 95% de confianza que el salario medio del grupo A es
+# mayor que el del B, es decir, tenemos evidencias para rechazar $H_0$.
 # %% [markdown]
 # Si ahora realizamos el mismo test de hipotesis bajo la suposición de $H_0$ y
 # distribución t-student por parte de nuestro estadistico, obtenemos:
@@ -156,6 +151,14 @@ ttstat, tpvalue, df = cm.ttest_ind(alternative="larger", usevar="unequal")
 
 # %%
 tpvalue <= alpha
-
 # %% [markdown]
-# ## Potencia del Test
+# ## Tamaños muy distintos de muestra
+# Concluimos que el tamaño dispar entre muestras podría afectar el resultado del
+# test, debido a que, si se usa un estadistico con distribución t-student, los
+# grados de libertad se verian afectados, alterando el valor observado del
+# estadístico y el p-valor. En el caso de un estadístico z, ocurre de manera
+# similar, pero esta vez el valor observado del estadistico se ve afectado por
+# encontrarse $n_A$ y $n_B$ en el divisor del estadistico. Ahora bien, en este
+# caso debido al gran tamaño de ambas muestras, 4815 para el grupo A y 891 para
+# el grupo B, la disparidad entre ellas no afecta al test.
+
