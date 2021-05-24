@@ -1,3 +1,7 @@
+# %% [markdown]
+# # Diplomatura en Ciencas de Datos, Aprendizaje Automático y sus Aplicaciones
+#
+# Autores: Matias Oria, Antonela Sambuceti, Pamela Pairo, Benjamín Ocampo
 # %%
 import numpy as np
 import pandas as pd
@@ -196,7 +200,7 @@ list(zip(nof_samplesA, nof_samplesB))
 
 # %% [markdown]
 # Notar que para obtener una potencia de 0.8, 0.9, y 0.95, se requieren menos de
-# 500 muestras del grupo A y menos de 100 del grupo B, siendo más que suficiente
+# 420 muestras del grupo A y menos de 80 del grupo B, siendo más que suficiente
 # el tamaño disponible inicialmente. Si calculamos la potencia del test anterior
 # obtenemos un resultado de prácticamente 1.
 # %%
@@ -208,7 +212,7 @@ TTestIndPower().power(
     alternative="larger"
 )
 # %% [markdown]
-# Si bien los resultados obtenidos y el tamaño de la muesta dejan en evidencia
+# Si bien los resultados obtenidos y el tamaño de la muestra dejan en evidencia
 # la diferencia en salario de ambos grupos, un análisis más preciso debería ser
 # realizado si se quisiera realizar este procedimiento en un juicio penal contra
 # a una empresa por causa de discriminación. Deberíamos estudiar si esta
