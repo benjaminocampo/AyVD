@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 import statsmodels.stats.api as sms
+from statsmodels.stats.power import tt_ind_solve_power, TTestIndPower
 
 URL = "https://cs.famaf.unc.edu.ar/~mteruel/datasets/diplodatos/sysarmy_survey_2020_processed.csv"
 DB = pd.read_csv(URL)
@@ -11,8 +12,6 @@ salary_monthly_NETO = "salary_monthly_NETO"
 profile_gender = "profile_gender"
 
 df = DB[[salary_monthly_NETO, profile_gender]]
-
-df.groupby(profile_gender).describe()
 
 alpha = 0.05
 
@@ -158,7 +157,62 @@ tpvalue <= alpha
 # grados de libertad se verian afectados, alterando el valor observado del
 # estadístico y el p-valor. En el caso de un estadístico z, ocurre de manera
 # similar, pero esta vez el valor observado del estadistico se ve afectado por
-# encontrarse $n_A$ y $n_B$ en el divisor del estadistico. Ahora bien, en este
-# caso debido al gran tamaño de ambas muestras, 4815 para el grupo A y 891 para
-# el grupo B, la disparidad entre ellas no afecta al test.
+# encontrarse $n_A$ y $n_B$ en el divisor del desvío estandar de la diferencia
+# de medias. Eso llevaría a que, a menor tamaño de muestra tendremos mayor
+# desvío y por ende un valor observado en el estadistico cercano a 0. Ahora
+# bien, en este caso debido al gran tamaño de ambas muestras, 4815 para el grupo
+# A y 891 para el grupo B, la disparidad entre ellas no afecta al test.
 
+# %% [markdown]
+# ## Potencia del Test
+# La potencia del test está dado como $1 - \beta$, donde $\beta$ es la
+# probabilidad de cometer un error de tipo 2. Es decir, la probabilidad de no
+# rechazar $H_0$ cuando esta es falsa. En un test de hipotesis, queremos que la
+# probabilidad de cometer un error de tipo 2 sea baja, o lo que es equivalente,
+# tener una alta potencia, ya que por ende nuestro test tendrá gran capacidad de
+# detectar cuando la hipotesis nula es falsa.
+# %% [markdown]
+# Recordemos que el tamaño de la muestra nos permite reducir los errores de tipo
+# 1 y 2, por ende, si consideramos valores fijos para $\alpha$ y $\beta$
+# podremos obtener cual es el tamaño de muestra necesario para tener dichas
+# propiedades. Esto lo realizamos a través de `tt_ind_solve_power`.
+# %%
+powers = [0.8, 0.9, 0.95]
+
+effect_size = (groupA.mean() - groupB.mean()) / groupB.std()
+alpha = 0.05
+ratio = len(groupB) / len(groupA)
+nof_samplesA = [
+    tt_ind_solve_power(
+        effect_size=effect_size,
+        alpha=alpha,
+        power=power,
+        ratio=ratio,
+        alternative="larger"
+    ) for power in powers
+]
+nof_samplesB = [n*ratio for n in nof_samplesA]
+list(zip(nof_samplesA, nof_samplesB))
+
+# %% [markdown]
+# Notar que para obtener una potencia de 0.8, 0.9, y 0.95, se requieren menos de
+# 500 muestras del grupo A y menos de 100 del grupo B, siendo más que suficiente
+# el tamaño disponible inicialmente. Si calculamos la potencia del test anterior
+# obtenemos un resultado de prácticamente 1.
+# %%
+TTestIndPower().power(
+    effect_size=effect_size,
+    alpha=alpha,
+    nobs1=groupA.size,
+    ratio=ratio,
+    alternative="larger"
+)
+# %% [markdown]
+# Si bien los resultados obtenidos y el tamaño de la muesta dejan en evidencia
+# la diferencia en salario de ambos grupos, un análisis más preciso debería ser
+# realizado si se quisiera realizar este procedimiento en un juicio penal contra
+# a una empresa por causa de discriminación. Deberíamos estudiar si esta
+# diferencia es realmente debido a discriminación y no a alguna otra variable
+# como los roles, tipo de contrato, regiones donde trabajan los empleados, entre
+# otras.
+# %%
