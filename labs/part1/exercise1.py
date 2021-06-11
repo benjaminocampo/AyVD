@@ -11,6 +11,7 @@
 import pandas as pd
 import seaborn
 import matplotlib.pyplot as plt
+import numpy as np
 
 URL = "https://cs.famaf.unc.edu.ar/~mteruel/datasets/diplodatos/sysarmy_survey_2020_processed.csv"
 DB = pd.read_csv(URL)
@@ -22,6 +23,7 @@ salary_in_usd = "salary_in_usd"
 salary_monthly_NETO = "salary_monthly_NETO"
 tools_programming_language = "tools_programming_languages"
 work_contract_type = "work_contract_type"
+
 
 def split_languages(languages_str):
     if not isinstance(languages_str, str):
@@ -282,3 +284,58 @@ seaborn.boxenplot(
 # distintos roles de los empleados dentro de la compañia. Por último los
 # boxplots dejan en evidencia su desventaja al no tener información sobre el
 # primer y el cuarto cuantiles.
+
+# %% [markdown]
+# Empleos del ¿Futuro? 🐱‍🏍
+#
+# Son cada vez mas las personas que sienten que sus trabajos están quedando
+# estancados, obsoletos, sin proyección y con sueldos cada vez mas bajos.
+#
+# Data Sciense, BI, IT, Programación, Big Data, Machine Learning, son algunos de
+# los términos utilizados al hablar del nuevo mercado laboral.
+#
+# Un requisito común que observamos en las búsquedas laborales es el manejo de
+# lenguajes de programación. Hoy en día existen múltiples lenguajes para
+# aprender y muchos tienen fines similares.
+#
+# Entonces... ¿Con que lenguaje empezar?
+#
+# Según la encuesta de programadores de Sysarmy, el top 10 de lenguajes mas
+# populares para comenzar este desafío son los siguientes:
+
+# %%
+gb = df_langs.groupby(programming_language)
+count_bylangs = gb \
+    .agg(salary_monthly_NETO_mean=(salary_monthly_NETO, "mean")) \
+    .join(gb.size().to_frame().rename(columns={0: "count"}))
+
+count_bylangs.sort_values(
+    by="salary_monthly_NETO_mean",
+    ascending=False
+).head(10)
+# %%
+fig = plt.figure(figsize=(8, 6))
+top10 = [
+    "go",
+    "python",
+    "bash/shell",
+    "java",
+    "typescript",
+    "javascript",
+    "sql",
+    "css",
+    "html",
+    ".net"
+]
+seaborn.barplot(
+    data=df_langs[df_langs[programming_language].isin(top10)],
+    x='programming_language',
+    y='salary_monthly_NETO',
+    estimator=np.mean,
+    ci=None,
+    order=top10
+)
+plt.xticks(rotation=90)
+plt.ylabel("Salario Medio")
+plt.xlabel("Lenguajes")
+plt.ticklabel_format(style='plain', axis='y')
