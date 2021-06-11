@@ -286,7 +286,7 @@ seaborn.boxenplot(
 # primer y el cuarto cuantiles.
 
 # %% [markdown]
-# Empleos del ¿Futuro? 🐱‍🏍
+# ## Empleos del ¿Futuro? 🐱‍🏍
 #
 # Son cada vez mas las personas que sienten que sus trabajos están quedando
 # estancados, obsoletos, sin proyección y con sueldos cada vez mas bajos.
